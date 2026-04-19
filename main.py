@@ -2,6 +2,8 @@ import telebot
 from telebot import types
 import sqlite3
 import os
+from flask import Flask
+import threading
 
 TOKEN = "8299747184:AAHugmlEBT3VUozjE8mv2141h2lE4yE3d0E"
 ADMIN_ID = 8213405271
@@ -10,6 +12,17 @@ bot = telebot.TeleBot(TOKEN)
 
 state = {}
 temp = {}
+
+# ===== Flask (حل مشكلة port) =====
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 # ===== DATABASE =====
 conn = sqlite3.connect("store.db", check_same_thread=False)
@@ -61,7 +74,7 @@ def admin_panel(message):
     markup.add("📊 الطلبات")
     markup.add("➕ إضافة فئة", "🗑 حذف فئة")
     markup.add("➕ إضافة منتج", "🗑 حذف منتج")
-    markup.add("✏️ تعديل فئة", "💰 تعديل سعر")
+    markup.add("💰 تعديل سعر")
     markup.add("🔙 رجوع")
 
     state[message.chat.id] = "admin"
@@ -296,5 +309,8 @@ def save_price(message):
     bot.send_message(message.chat.id, "✔ تم تحديث السعر")
     state[message.chat.id] = "admin"
 
+# ===== تشغيل =====
 print("Bot running...")
+
+threading.Thread(target=run_web).start()
 bot.infinity_polling()
